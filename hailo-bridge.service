@@ -1,0 +1,39 @@
+kosh@hal-9001:~ $ sudo cat /etc/systemd/system/hailo-bridge.service 
+[Unit]
+Description=Hailo bank-switching bridge (Open WebUI <-> hailo-ollama)
+After=network.target
+Wants=hailo-ollama.service
+
+[Service]
+Type=simple
+User=hailo-bridge
+Group=hailo-bridge
+WorkingDirectory=/opt/hailo-bridge
+ExecStart=/opt/hailo-bridge/venv/bin/uvicorn hailo_bridge:app --host 0.0.0.0 --port 5001
+Environment=HAILO_UPSTREAM=http://127.0.0.1:8000
+Environment=BANKS_DIR=/var/lib/hailo-bridge/banks
+Environment=CHATS_DIR=/run/hailo-bridge/chats
+Environment=MAX_PROMPT_TOKENS=1300
+Environment=DYN_BANK_MAX_TOKENS=500
+Environment=CONSOLIDATE_PROMPT_TOKENS=1500
+Environment=CONSOLIDATE_MIN_TOKENS=500
+Environment=CONSOLIDATE_MAX_WORDS=200
+Environment=SESSION_TTL_MINUTES=120
+RuntimeDirectory=hailo-bridge
+RuntimeDirectoryMode=0755
+Restart=on-failure
+RestartSec=5
+
+Environment=BRIDGE_DEBUG=1
+
+# Hardening: the bridge needs nothing outside /var/lib/hailo-bridge and /run
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/var/lib/hailo-bridge
+
+[Install]
+WantedBy=multi-user.target
+
+
